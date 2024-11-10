@@ -62,4 +62,4 @@ class PDFtoCSV:
         print(f".csv saved at {self.path[:-4]}.csv")
         
 
-err = PDFtoCSV("cursocaio.pdf", 3)
+err = PDFtoCSV("curriculum.pdf", 3)
