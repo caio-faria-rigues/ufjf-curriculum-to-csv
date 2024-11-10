@@ -1,57 +1,65 @@
 import PyPDF2 as pdf
 import csv
 
-def pdfToMatrix(file: str, max_page: int) -> list: 
-    i=0
-    with open(file, 'rb') as file:
-        reader = pdf.PdfReader(file)
-        text = ''
-        for page in reader.pages:
-            text += page.extract_text()
-            i+=1
-            if i>=max_page: break
+class PDFtoCSV:
+    def __init__(self, pdfFilePath: str, pdfPages: int) -> None:
+        """
+        Generate your .csv curriculum at the same path as your .pdf curriculum
 
-    lines = text.splitlines()
-    matrix = [line.split() for line in lines if line.strip()]
-    return matrix
+        :param pdfFilePath: absolute or relative path to your .pdf curriculum
+        :param pdfPages: the max amount of pages this code will detect
+        """
+        self.path = pdfFilePath
+        self.pages = pdfPages
+        self.matrix = []
 
-def saveToCSV(matrix: list, csv_file: str)-> None:
-    num = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
-    with open(csv_file, mode='w', newline='') as file:
-        writer = csv.writer(file)
-        for row in matrix[2:]:
-            newrow = ['', '', '', '', '', '', '']
-            if len(row[0])!=6: continue
-            if len(row)<6: continue
-            newrow[0] = row[-2] # num
-            newrow[1] = row[-3] # periodo
-            newrow[2] = row[0] # codigo
+        self._pdfToMatrix()
+        self._saveToCSV()
 
-            #se tem 2 pré requisitos:
-            if row[-5][-1] in num:
-                newrow[3] = " ".join(row[1:-5]) # nome
-                newrow[4] = row[-4] # requisito1
-                newrow[5] = row[-5] # requisito2
-                newrow[6] = row[-1] # horas
+    def _pdfToMatrix(self) -> None:
+        i=0
+        with open(self.path, 'rb') as file:
+            reader = pdf.PdfReader(file)
+            text = ''
+            for page in reader.pages:
+                text += page.extract_text()
+                i+=1
+                if i>=self.pages: break
 
-            #se tem 1 pré requisito:
-            elif row[-4][-1] in num:
-                newrow[3] = " ".join(row[1:-4]) # nome
-                newrow[4] = row[-4] # requisito 1
-                newrow[6] = row[-1] # horas
+        lines = text.splitlines()
+        self.matrix = [line.split() for line in lines if line.strip()]
+    
+    def _saveToCSV(self) -> None:
+        num = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
+        with open(f"{self.path[:-4]}.csv", mode='w', newline='') as file:
+            writer = csv.writer(file)
+            for row in self.matrix[2:]:
+                newrow = ['', '', '', '', '', '', '']
+                if len(row[0])!=6: continue
+                if len(row)<6: continue
+                newrow[0] = row[-2] # num
+                newrow[1] = row[-3] # periodo
+                newrow[2] = row[0] # codigo
 
-            #sem pré requisito:
-            else:
-                newrow[3] = " ".join(row[1:-3]) # nome
-                newrow[6] = row[-1] # horas
-            writer.writerow(newrow)
+                #se tem 2 pré requisitos:
+                if row[-5][-1] in num:
+                    newrow[3] = " ".join(row[1:-5]) # nome
+                    newrow[4] = row[-4] # requisito1
+                    newrow[5] = row[-5] # requisito2
+                    newrow[6] = row[-1] # horas
 
+                #se tem 1 pré requisito:
+                elif row[-4][-1] in num:
+                    newrow[3] = " ".join(row[1:-4]) # nome
+                    newrow[4] = row[-4] # requisito 1
+                    newrow[6] = row[-1] # horas
 
-pdf_file = "mypdf.pdf"
-csv_file = "mycsv.csv"
-end_page = 3
+                #sem pré requisito:
+                else:
+                    newrow[3] = " ".join(row[1:-3]) # nome
+                    newrow[6] = row[-1] # horas
+                writer.writerow(newrow)
+        print(f".csv saved at {self.path[:-4]}.csv")
+        
 
-matrix = pdfToMatrix(file=pdf_file, max_page=end_page)
-
-saveToCSV(matrix = matrix, csv_file = csv_file)
-
+err = PDFtoCSV("cursocaio.pdf", 3)
